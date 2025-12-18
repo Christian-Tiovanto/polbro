@@ -4,6 +4,7 @@ import { FaPlus, FaCopy, FaTrash } from "react-icons/fa";
 import useSWRMutation from "swr/mutation";
 import { useRouter } from "next/navigation";
 import withAuth from "../../protected_route";
+import { v4 as uuidv4 } from 'uuid';
 
 async function sendCreatePollRequest(url, { arg }) {
   const token = sessionStorage.getItem("token");
@@ -29,8 +30,8 @@ const CreateRoomPage = () => {
   const [title, setTitle] = useState("");
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState([
-    { id: crypto.randomUUID(), option: "", desc: "" },
-    { id: crypto.randomUUID(), option: "", desc: "" },
+    { id: uuidv4(), option: "", desc: "" },
+    { id: uuidv4(), option: "", desc: "" },
   ]);
   const [pollLink, setPollLink] = useState("");
   const [pollCode, setPollCode] = useState("");
@@ -80,7 +81,7 @@ const CreateRoomPage = () => {
       setErrorMessage(`You can only add up to ${colorOptions.length} options.`);
       return;
     }
-    setOptions([...options, { id: crypto.randomUUID(), option: "", desc: "" }]);
+    setOptions([...options, { id: uuidv4(), option: "", desc: "" }]);
   };
 
   const handleRemoveOption = (id) => {
@@ -263,7 +264,7 @@ const CreateRoomPage = () => {
                 onChange={(e) => setExpiryMinutes(e.target.value)}
                 min="0"
                 max="59"
-                step="5"
+                step="1"
                 disabled={isMutating || !!pollLink}
               />
               <span className="text-gray-600">minutes</span>
