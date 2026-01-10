@@ -1,0 +1,65 @@
+name: Build And Push Backend Docker Image
+
+on:
+  workflow_dispatch:
+
+env:
+  ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # runs only if this workflow is dispatched on 'tag', not 'branch'
+      - name: Validate running ref type
+        run: |
+          REF_TYPE=${{ github.ref_type }}
+          if [[ "$REF_TYPE" != "tag" ]]; then
+            echo "Workflow is not run on tag."
+            exit 1
+          fi
+          echo "Workflow is running of tag"
+
+      # Extract the tag name and validate it with regex
+      - name: Validate tag with regex
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta)(\.[0-9]+)?)?$ ]]; then
+            echo "Tag format is invalid. Exiting."
+            exit 1
+          fi
+
+      - name: Validate Git tag matches package.json version
+        id: validate_version
+        run: |
+          PACKAGE_VERSION=$(jq -r '.version' < package.json)
+          TAG_VERSION=${GITHUB_REF_NAME#v} 
+          if [[ "$PACKAGE_VERSION" != "$TAG_VERSION" ]]; then
+            echo "Tag version ($TAG_VERSION) does not match package.json version ($PACKAGE_VERSION)."
+            exit 1
+          fi
+          echo "Tag version matches package.json version."
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push to Docker Hub
+        id: build-image
+        run: |
+          IMAGE_TAG=${GITHUB_REF_NAME#v}
+          
+          DOCKER_REPO="christianorigaming/polbro_app"
+          FULL_IMAGE_NAME="$DOCKER_REPO:$IMAGE_TAG"
+          
+          echo "Building Docker image: $FULL_IMAGE_NAME"
+
+          docker build -t "$FULL_IMAGE_NAME" .
+
+          echo "Pushing Docker image to Docker Hub: $FULL_IMAGE_NAME"
+
+          docker push "$FULL_IMAGE_NAME"
