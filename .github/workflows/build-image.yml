@@ -58,8 +58,12 @@ jobs:
           
           echo "Building Docker image: $FULL_IMAGE_NAME"
 
-          docker build -t "$FULL_IMAGE_NAME" .
-
+          docker build \
+            --build-arg NEXT_PUBLIC_AUTH_BACKEND_API_URL="${{ secrets.NEXT_PUBLIC_AUTH_BACKEND_API_URL }}" \
+            --build-arg NEXT_PUBLIC_POLLING_BACKEND_API_URL="${{ secrets.NEXT_PUBLIC_POLLING_BACKEND_API_URL }}" \
+            --build-arg NEXT_PUBLIC_POLLING_FRONTEND_API_URL="${{ secrets.NEXT_PUBLIC_POLLING_FRONTEND_API_URL }}" \
+            -t "$FULL_IMAGE_NAME" .
+          
           echo "Pushing Docker image to Docker Hub: $FULL_IMAGE_NAME"
 
           docker push "$FULL_IMAGE_NAME"
